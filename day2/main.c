@@ -19,8 +19,8 @@ int main()
     char buff[MAX];
     int num;
     fp = fopen("input.txt", "r");
-    int depth = 0; //count of increases
-    int pos = 0; //previous
+    int depth = 0; 
+    int pos = 0; 
     
     for(;;) //read command, we use the fact that commands have distinct initial char
     {
