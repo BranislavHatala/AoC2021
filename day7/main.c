@@ -18,6 +18,7 @@ Code, Compile, Run and Debug online from anywhere in world.
 
 int ReadInput(int *numbers,int count);
 int ReadDelimLine(int *numbers,int count,char *delim);
+int CalcFuelCost(int crab, int destination);
 
 FILE *g_fp;
 char g_buff[MAX];
@@ -57,7 +58,7 @@ int main()
         //iterate crabs to sum fuel cost
         for(int j = 0; j < cCount ; j++)
         {
-            fuelCost += abs(crabs[j] - i);
+            fuelCost += CalcFuelCost(crabs[j], i);
         }
         if(bestFuelCost>fuelCost)//update best cost
         {
@@ -69,6 +70,18 @@ int main()
     printf("value: %d \n", bestFuelCost);
     return 0;
 }
+
+int CalcFuelCost(int crab, int destination)
+{
+    int steps = abs(crab - destination);
+    int retval = 0;
+    for(int i = 1 ; i <= steps ; i++ )//apply increasing fuel cost for each step
+    {
+        retval += i;
+    }
+    return retval;
+}
+
 
 int ReadInput(int *numbers,int count)
 {
