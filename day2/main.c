@@ -1,7 +1,7 @@
 /******************************************************************************
 
 Welcome to GDB Online.
-GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby,
 C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
 Code, Compile, Run and Debug online from anywhere in world.
 
@@ -19,9 +19,10 @@ int main()
     char buff[MAX];
     int num;
     fp = fopen("input.txt", "r");
-    int depth = 0; 
-    int pos = 0; 
-    
+    int depth = 0;
+    int pos = 0;
+    int aim = 0;
+
     for(;;) //read command, we use the fact that commands have distinct initial char
     {
         comm = fgetc((FILE*)fp);
@@ -33,7 +34,7 @@ int main()
         {
             //NOP
         }
-        
+
         if(fgets(buff, MAX, (FILE*)fp) )// read value for command
         {
             num = atoi(buff);
@@ -42,27 +43,28 @@ int main()
         {
             printf("ERROR: failed to read value for command");
         }
-        
-        switch(comm)//distinguish command
+
+        switch(comm)//execute command
         {
             case 'u': //up
-                depth-=num;
+                aim-=num;
                 if(depth<0)
                 {
                     printf("ERROR: your submarine lacks technical equipment to soar the sky");
                 }
                 break;
             case 'd': //down
-                depth+=num;
+                aim+=num;
                 break;
             case 'f': //forward
                 pos+=num;
+                depth += aim*num;
                 break;
             default:
                 printf("ERROR: uknown command");
                 break;
         }
-        
+
     }
     printf("result: %d \n", depth*pos);
     return 0;
