@@ -22,7 +22,7 @@ struct Line{
     int y1;
     int x2;
     int y2;
-    char orient;//orientation, v - vertical, h - horizontal
+    char orient;//orientation, v - vertical, h - horizontal, d - down( diagonal left to right descends downwards), u - up (diagonal from left to right rises upwards.)
 };
 
 struct OverLapPoint{
@@ -31,12 +31,15 @@ struct OverLapPoint{
     int order; //how many vent lines overlap in this point
 };
 
-//Checks if the line is diagonal, returns 1 if it is
-int LineCheckDiag(struct Line *line);
+
 
 int findOverlaps(struct Line la, struct Line lb, struct OverLapPoint *pts, int *pCount);
 
+//orders points and assing orientation to line struct
 void LineOrderPoints(struct Line *line);
+
+//swap points of line
+void LineSwapPoints(struct Line *line);
 
 int addPoint(int x, int y, struct OverLapPoint *pts, int *pCount);
 
@@ -58,18 +61,19 @@ int main()
         //read and test line
         struct Line temp;
         sscanf(buff, "%d,%d -> %d,%d\n", &temp.x1, &temp.y1, &temp.x2, &temp.y2);//read buff into Line struct
-        if(LineCheckDiag(&temp)) //skip diagonal lines
-        {
-            continue;
-        }
         LineOrderPoints(&temp);
         lines[lineCount] = temp; //shallow copy is fine
         lineCount++;
     }
 
     //now check for overlaps
-    for(int i = 0 ; i < (lineCount) ; i++)//check each line
+    for(int i = 0 ; i < (lineCount) ; i++)//iterate lines creating points
     {
+        if(i%50 == 0)
+        {
+            printf("value: %d \n", i);
+        }
+
         if(lines[i].orient == 'h')
         {
             for(int j = lines[i].x1 ; j <= lines[i].x2 ; j++ )
@@ -90,6 +94,26 @@ int main()
                 }
             }
         }
+        if(lines[i].orient == 'u')
+        {
+            for(int j = 0 ; j <= (lines[i].x2 - lines[i].x1) ; j++ )//j is now number of point in line
+            {
+                if(addPoint(lines[i].x1 + j , lines[i].y1 - j , points , &pointCount) == -1)
+                {
+                    printf("Points array ran out of space");
+                }
+            }
+        }
+        if(lines[i].orient == 'd')
+        {
+            for(int j = 0 ; j <= (lines[i].x2 - lines[i].x1) ; j++ )//j is now number of point on the line
+            {
+                if(addPoint(lines[i].x1 + j , lines[i].y1 + j , points , &pointCount) == -1)
+                {
+                    printf("Points array ran out of space");
+                }
+            }
+        }
     }
 
     // count dangerous points
@@ -101,6 +125,7 @@ int main()
             dangerCount++;
         }
     }
+
     free(points);
     points = 0;
     printf("value: %d \n", dangerCount);
@@ -133,81 +158,67 @@ int addPoint(int x, int y, struct OverLapPoint *pts, int *pCount)
             retval = -1;
         }
     }
+
     return retval;
 }
-/*
-int findOverlaps(struct Line la, struct Line lb, struct OverLapPoint *pts, int *pCount)
+
+
+void LineOrderPoints(struct Line *line)
 {
-    int ovrlpStrt;//point overlap starts
-    int ovrlpEnd;//point overlap ends
-
-    if(la.orient == lb.orient)//paralell lines
-    {
-        if(la.orient == 'h')
-        {
-            if(la.x1 > lb.x1)//swap lines so a is the one on the left
-            {
-                struct Line swap = lb;
-                lb = la;
-                la = swap;
-            }
-
-            if(la.x2 >= lb.x1)//is there a overlap, if yes then we know it starts lb.x1
-            {
-                ovrlpStrt = lb.x1;
-                if(lb.x2 < la.x2)
-                {
-                    ovrlpEnd = lb.x2;
-                }
-                else
-                {
-                    ovrlpEnd = la.x2;
-                }
-
-
-            }
-
-            //now to create points
-
-        }
-    }
-}
-*/
-int LineCheckDiag(struct Line *line)
-{
-    int retval = 1;
+    //first we deal with horizontal and vertical
+    line->orient = 0;
     if((line->x1 == line->x2))
     {
-        retval = 0;
         line->orient = 'v';
     }
     if((line->y1 == line->y2))
     {
-        retval = 0;
         line->orient = 'h';
     }
 
-    return retval;
-}
-
-void LineOrderPoints(struct Line *line)
-{
     if(line->orient == 'h')
     {
         if(line->x1 > line->x2) //swap so line goes from left to right
         {
-            int swap = line->x2;
-            line->x2 = line->x1;
-            line->x1 = swap;
+            LineSwapPoints(line);
         }
     }
     if(line->orient == 'v')
     {
         if(line->y1 > line->y2) //swap so line goes from left to right
         {
-            int swap = line->y2;
-            line->y2 = line->y1;
-            line->y1 = swap;
+            LineSwapPoints(line);
         }
     }
+
+    //now we deal with diagonal
+    if(line->orient == 0)// line was not vertial or horizontal
+    {
+        //order points so starting point is the leftmost one
+        if(line->x1 > line->x2)
+        {
+            LineSwapPoints(line);
+        }
+        //determine orientation
+        if(line->y1 < line->y2)//down
+        {
+            line->orient = 'd';
+        }
+        else//up
+        {
+            line->orient = 'u';
+        }
+    }
+
+}
+
+void LineSwapPoints(struct Line *line)
+{
+    int swap = line->x2;
+    line->x2 = line->x1;
+    line->x1 = swap;
+
+    swap = line->y2;
+    line->y2 = line->y1;
+    line->y1 = swap;
 }
