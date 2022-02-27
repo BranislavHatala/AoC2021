@@ -10,100 +10,72 @@ Code, Compile, Run and Debug online from anywhere in world.
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
+#include <stdint.h>
+
 
 #define MAX 1000
-#define BITS 12 //bit width of each entry
-#define MAXFISH 900000
-#define DAYS 80
+#define FISHSTATES 9
+#define DAYS 256
 #define SPAWNTIME 8
 #define RESETTIME 6
 
-int ReadInput(char *numbers,int count);
-int ReadDelimLine(char *numbers,int count,char *delim);
+int ReadInput(uint64_t *fstates,int count);
+int ReadDelimLine(uint64_t *fstates,int count,char *delim);
 
 FILE *g_fp;
 char g_buff[MAX];
 
 int main()
 {
-    char fish[MAXFISH];// fish timers array
-    int fCount = 0;
+    uint64_t fstates[FISHSTATES] = {0}; //states of fish, each fiel is count of fish where i is state, "Markov" based approach
+    uint64_t fCount = 0;
 
     g_fp = fopen("input.txt", "r");
 
-    if(ReadInput(fish,MAXFISH))
+    if(ReadInput(fstates,MAX))
     {
         printf("ERROR: reading first line failed");//in case I add error code in func return
     }
 
-    for(int i = 0; i < MAXFISH ; i++)//Count starting fish
-    {
-        if(fish[i] == -1)
-        {
-            fCount = i;
-            break;
-        }
-    }
-
-    //Print initial state
-    printf("Initial state: ", fCount);
-    for(int i = 0; i < (fCount-1) ; i++)
-    {
-        printf("%d,", fish[i]);
-    }
-    printf("%d\n", fish[(fCount-1)]);
-
     //simulate
     for(int i = 1 ; i <= DAYS ; i++ )
     {
-        int j = fCount - 1;
-        for(; j >= 0 ; j--)//go through fish
-        {
-            if(fish[j] == 0)
-            {
-                if(fCount < MAXFISH)
-                {
-                    fish[fCount] = SPAWNTIME;
-                    fish[j] = RESETTIME;
-                    fCount++;
-                }
-                else
-                {
-                    printf("ERROR: Too many fish in the sea.\n");
-                }
-            }
-            else
-            {
-                fish[j]--;
-            }
-        }
+        uint64_t temp = fstates[0];// fish ready to spawn fish
 
-        //print
-        /*
-        printf("day %d state:   ", i);
-        for(int j = 0; j < (fCount-1) ; j++)
+        for(int i = 1 ; i < FISHSTATES ; i++)//shift states lower
         {
-            printf("%d,", fish[j]);
+            fstates[i-1] = fstates[i];
+            fstates[i] = 0;
         }
-        printf("%d\n", fish[(fCount-1)]);
-        */
-
+        fstates[SPAWNTIME] += temp;// fish are spawned
+        fstates[RESETTIME] += temp;// fish are reset;
+        temp = 0;
     }
 
+    //count fish
+    for(int i = 0 ; i < FISHSTATES ; i++)
+    {
+        fCount += fstates[i];
+        printf("value: %lld \n", fstates[i]);
+    }
 
-    printf("value: %d \n", fCount);
+    uint64_t i = 0;
+    i--;
+    printf("value: %llu \n", i);
+    printf("value: %lld \n", fCount);
     return 0;
 }
 
-int ReadInput(char *numbers,int count)
+int ReadInput(uint64_t *fstates,int count)
 {
     char delim[2] = ",";
-    ReadDelimLine(numbers, count, delim);
+    ReadDelimLine(fstates, count, delim);
     fgets(g_buff, MAX, (FILE*)g_fp);//skip the empty line
     return 0;
 }
 
-int ReadDelimLine(char *numbers,int count,char *delim)
+int ReadDelimLine(uint64_t *fstates,int count,char *delim)
 {
     char *gptr =  fgets(g_buff, MAX, (FILE*)g_fp);//get first line
     //extract array of called nums
@@ -119,12 +91,9 @@ int ReadDelimLine(char *numbers,int count,char *delim)
    {
         if(tok != 0)//check if there is something
         {
-            numbers[i] = atoi(tok);
+            fstates[atoi(tok)]++;
         }
-        else
-        {
-            numbers[i] = -1;//rest of array should indicate there is no valid number
-        }
+
 
         // Get another one
         tok = strtok(0, delim);
